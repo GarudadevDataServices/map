@@ -56,7 +56,7 @@ const Header = (props:{title?:String,className:string}) => {
         <div className="flex justify-between">
           <Link
             className="flex items-center"
-            href="/"
+            href="https://garudadevdataservices.github.io/mapexpo/"
             onClick={() =>
               isToggleMenuOpen ? handleToggleMenuOnClick() : setIsDropdownOpen(updatedIsDropdownOpen as boolean[])
             }
