@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as mapApi from 'apis/api';
 import ClipLoader from 'react-spinners/ClipLoader';
