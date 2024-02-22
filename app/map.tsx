@@ -159,7 +159,6 @@ export default function Page() {
     }
 
     function loadInitialData(path: string) {
-      
       console.log(`Getting for more on ${path}`)
       mapApi.getPageData(path).then(
         async (data) => {
@@ -179,7 +178,7 @@ export default function Page() {
       )
     }
 
-    return () => loadInitialData(path);
+    loadInitialData(path);
   }, [searchParams, onEachFeature, createFunction]);
   
 
