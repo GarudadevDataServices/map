@@ -23,14 +23,14 @@ export const announcementData: AnnouncementProps = {
 // Header data
 export const headerData: HeaderProps = {
   links: [
-    {
-      label: 'Data Source',
-      href: '/source',
-    },
-    {
-      label: 'About Us',
-      href: 'https://akuladatta.github.io',
-    },
+    // {
+    //   label: 'Data Source',
+    //   href: '/source',
+    // },
+    // {
+    //   label: 'About Us',
+    //   href: 'https://akuladatta.github.io',
+    // },
   ],
   isSticky: true,
   showToggleTheme: true,
@@ -40,7 +40,7 @@ export const headerData: HeaderProps = {
 
 // Footer data
 export const footerData: FooterProps = {
-  title: 'MapExpo',
+  title: 'map',
   links: [
     {
       label: 'Terms & Conditions',

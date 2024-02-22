@@ -16,7 +16,7 @@ module.exports = {
   },
   output: "export",
   trailingSlash: true,
-  basePath:'/mapexpo'
+  basePath:'/map'
   // assetPrefix: './'
 }
 

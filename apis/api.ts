@@ -1,26 +1,31 @@
-import { PageData } from "models/page_objects";
+import { MapColorData, PageData } from "models/model";
 
-export const convertApiToPageData = async (path:String,loadCache:boolean): Promise<PageData> => {
-    const apiUrl = `https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/pages/${path}/.json`;
-  
-    try {
-      const options = (loadCache)?{cache: 'force-cache'}:{};
-      const response = await fetch(apiUrl, options as RequestInit);
-  
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
-  
-      const jsonData = await response.json();
-  
-      return {
-        Objects: jsonData.Objects || [],
-        icon: jsonData.icon || "",
-        title: jsonData.title || "",
-      };
-    } catch (error) {
-      console.error("Error fetching data from API:", error);
-      throw error;
-    }
+export const getPageData = async (path:String): Promise<PageData> => {
+    const apiUrl = `https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/${path}/.json`;
+    const jsonData = await getJsonResponseFromUrl(apiUrl);
+    return (jsonData as unknown as PageData);
   };
-  
+
+
+export async function getJsonResponseFromUrl(url: RequestInfo, maxRetries: number = 3): Promise<Map<string, any>> {
+  let retries = 0;
+  while (retries < maxRetries) {
+    try {
+      const response: Response = await fetch(url);
+      const json: Map<string, any> = await response.json();
+      if (response.ok) {
+        return json;
+      }
+      throw new Error(`Failed to fetch data. Status: ${response.status}, Message: ${json}`);
+    } catch (error) {
+      retries++;
+      console.error(`Error fetching data (Attempt ${retries}): ${error}`);
+    }
+  }
+  throw new Error(`Max retries (${maxRetries}) reached. Unable to fetch data.`);
+}
+
+export async function getColorData(url:RequestInfo){
+  const jsonData = await getJsonResponseFromUrl(url);
+  return (jsonData as unknown as MapColorData);
+}

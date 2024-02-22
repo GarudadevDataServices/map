@@ -7,7 +7,7 @@ import Logo from '~/components/atoms/Logo';
 import ToggleMenu from '../atoms/ToggleMenu';
 import { headerData } from '~/shared/data/global.data';
 
-const Header = () => {
+const Header = (props:{title?:String,className:string}) => {
   const { links, isSticky, showRssFeed, position } = headerData;
 
   const updatedIsDropdownOpen =
@@ -47,7 +47,7 @@ const Header = () => {
 
   return (
     <header
-      className={`bg-white border-b-2 shadow-lg rounded-md top-0 z-40 mx-auto w-full flex-none  transition-all duration-100 ease-in dark:bg-slate-900 md:backdrop-blur-sm dark:md:bg-slate-900/90 ${
+      className={props.className+` bg-white  border-b-2 shadow-lg rounded-md top-0 z-40 mx-auto w-full flex-none  transition-all duration-100 ease-in dark:bg-slate-900 md:backdrop-blur-sm dark:md:bg-slate-900/90 ${
         isSticky ? 'sticky' : 'relative'
       }`}
       id="header"
@@ -67,7 +67,10 @@ const Header = () => {
             <ToggleMenu handleToggleMenuOnClick={handleToggleMenuOnClick} isToggleMenuOpen={isToggleMenuOpen} />
           </div>
         </div>
-        <nav
+        <div className='flex flex-1 ml-4 md:ml-8 my-1 text-xl font-bold items-center justify-center'>
+          {props.title}
+        </div>
+        {/* <nav
           className={`${isToggleMenuOpen ? 'block' : 'hidden'} h-screen md:w-full ${
             position === 'right' ? 'justify-end' : position === 'left' ? 'justify-start' : 'justify-center'
           } w-auto overflow-y-auto dark:text-slate-200 md:mx-5 md:flex md:h-auto md:items-center md:overflow-visible`}
@@ -117,7 +120,7 @@ const Header = () => {
                 </li>
               ))}
           </ul>
-        </nav>
+        </nav> */}
         <div
           className={`${
             isToggleMenuOpen ? 'block' : 'hidden'

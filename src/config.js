@@ -1,10 +1,10 @@
 module.exports.SITE = {
-  name: 'MapExpo',
+  name: 'Map',
 
-  origin: 'https://garudadevdataservices.github.io/mapexpo/',
+  origin: 'https://garudadevdataservices.github.io/map/',
   basePathname: '/',
   trailingSlash: false,
 
-  title: 'MapExpo - Discovering World Through Maps',
-  description: 'MapExpo: Uncover the intricate layers of India through political, language, religion, health, and other fascinating statistical maps.',
+  title: 'Map: Data through map',
+  description: 'Map: Data through map',
 };

@@ -1,164 +1,211 @@
 "use client";
 
-// import type { Metadata } from 'next';
-import { useEffect, useState } from 'react';
-import { convertApiToPageData } from 'apis/api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import * as mapApi from 'apis/api';
 import ClipLoader from 'react-spinners/ClipLoader';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { IconInfoCircle } from '@tabler/icons-react';
-import Popup from 'reactjs-popup';
-import Elections from 'public/images/elections.png';
-import Religion from 'public/images/religion.png';
-import Language from 'public/images/languages.png';
-import Image from 'next/image';
-import { PageData, PageObject } from 'models/page_objects';
+import { FunctionData, MapColorData, PageData, StringOrNumber } from 'models/model';
+import Header from '~/components/widgets/Header';
+import L, { PathOptions } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import './css/style.css';
+import {IconPointer, IconPointerFilled} from '@tabler/icons-react';
 
 
-// import { SITE } from '~/config.js';
+interface pageJsonStates {
+  title: string;
+  desc: string;
+  metatitle: string;
+}
 
-// export const metadata: Metadata = {
-//   title: SITE.title,
-// };
+
 
 export default function Page() {
-  const [pageData, setPageData] = useState<PageData | null>(null);
-  const [paramLoaded,setLoadedParams] = useState<String[]>([]);
+  const [result, setResult] = useState<string>();
+  const [titleDesc, setTitleDesc] = useState<pageJsonStates>({ title: '', desc: '', metatitle:'' });
+
   const searchParams = useSearchParams();
+  const colorData = useRef<MapColorData | null>(null);
+  const geojsonData = useRef<Map<String,any>|null>(null);
+  const mapContainer = useRef<L.Map>();
+  const stateLayer = useRef<L.GeoJSON>();
+  const lastClickedLayer = useRef<L.GeoJSON>();
+  const tapped = useRef<boolean>(false);
+  const checkedLayer = useRef<L.GeoJSON>();
+
+  
+
+  const onEachFeature = useCallback((feature: GeoJSON.Feature, layer: L.GeoJSON)=>{
+    if (colorData.current == null) { return; }
+
+    const trigger: StringOrNumber = (feature?.properties as any)[colorData.current.trigger];
+    if ((colorData.current.data as any)[trigger] == null) {
+      return;
+    }
+
+    let highlightStyle = {
+      weight: 3,
+      opacity: 1,
+      color: 'red',
+      fillOpacity: .8
+    };
+
+    const selectedData = (colorData.current.data as any)[trigger];
+    let output = selectedData["matter"];
+    let _color = selectedData["color"];
+    
+    layer.on("mouseover", function (e) {
+      if (tapped.current) { return; }
+      if (lastClickedLayer.current) {
+        stateLayer.current!.resetStyle(lastClickedLayer.current);
+      }
+      lastClickedLayer.current = layer;
+      layer.setStyle(highlightStyle);
+      showResult(output, _color);
+    });
+
+    layer.on("click", function (e) {
+      console.log("cliked");
+      if ((checkedLayer.current == layer)) { // TODO : add this logic : &&($(window).width()>=992)
+        stateLayer.current!.resetStyle(checkedLayer.current);
+        checkedLayer.current = undefined;
+        tapped.current = false;
+        return;
+      }
+      tapped.current = true;
+      if (lastClickedLayer.current!=null) {
+        stateLayer.current!.resetStyle(lastClickedLayer.current);
+      }
+      lastClickedLayer.current = layer;
+      checkedLayer.current = layer;
+      layer.setStyle(highlightStyle);
+      showResult(output, _color);
+    });
+  },[]);
+
+  function style(feature?: GeoJSON.Feature): PathOptions {
+    const key: StringOrNumber = (feature?.properties as any)[colorData.current!.trigger];
+    const border = (colorData.current!.border == null) ? null : colorData.current!.border.split(",");
+
+    if (colorData.current != null) {
+      return {
+        fillColor: ((colorData.current.data as any)[key] == null) ? 'snow' : (colorData.current.data as any)[key].color,
+        weight: (border == null) ? 0.3 : border[0] as any,
+        opacity: (border == null) ? 0.85 : border[1] as any,
+        color: 'black',
+        fillOpacity: .8,
+      }
+    }
+    return {}
+  }
+
+  // creating function flow
+  const reStyleMap = useCallback(async (url: string) =>{
+    await mapApi.getColorData(url as RequestInfo).then(
+      async (_colorData) => {
+        colorData.current = _colorData;
+        tapped.current=false;
+        checkedLayer.current=undefined;
+        stateLayer.current!.clearLayers();
+        stateLayer.current = L.geoJSON(geojsonData.current as any, { style: style, onEachFeature: onEachFeature });
+        stateLayer.current.addTo(mapContainer.current!);
+      });
+  },[onEachFeature]);
+
+  const load_data_freq = useCallback((time: string, link: string)=>{
+    console.log("calling data again");
+    setTimeout(() => {
+      reStyleMap(link);
+      load_data_freq(time, link);
+    }, parseInt(time) * 1000);
+  },[reStyleMap])
+
+  const createFunction = useCallback((functionData: FunctionData)=>{
+    console.log("creating function")
+    if (functionData.name == "load_data_freq") {
+      const args = functionData.args.split(",");
+      load_data_freq(args[0], args[1]);
+    }
+  },[load_data_freq]);
+
 
   useEffect(() => {
-    setPageData(null);
-    const path = searchParams.get('page') ?? 'home';
+    const path = searchParams.get('map') ?? 'ap2019asm';
     console.log(`Getting data for ${path}`)
-    const paramAlreadyLoaded = paramLoaded.some((param)=> param===path);
-    if (!paramAlreadyLoaded){
-      setLoadedParams([...paramLoaded,path]);
+
+    function initilizeMap(_geojsonData: any):void {
+      console.log("hello called")
+      const mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZGF0dGEwNyIsImEiOiJja3A2dHRrajEyN3JwMnZtd2ZtZTZnYzB4In0.i89VhIgx3UVvpTffewpr4Q';
+      const layers = { 'Google-Maps': L.tileLayer(mbUrl, { id: 'mapbox/outdoors-v11', tileSize: 512, zoomOffset: -1 }), 'Satellite': L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1 }), 'Satellite-Label': L.tileLayer(mbUrl, { id: 'mapbox/satellite-streets-v11', tileSize: 512, zoomOffset: -1 }), 'Streets': L.tileLayer(mbUrl, { id: 'mapbox/streets-v11', tileSize: 512, zoomOffset: -1 }), 'Navigation-day': L.tileLayer(mbUrl, { id: 'mapbox/navigation-day-v1', tileSize: 512, zoomOffset: -1 }), 'Navigation-night': L.tileLayer(mbUrl, { id: 'mapbox/navigation-night-v1', tileSize: 512, zoomOffset: -1 }), 'Light': L.tileLayer(mbUrl, { id: 'mapbox/light-v10', tileSize: 512, zoomOffset: -1 }), 'Dark': L.tileLayer(mbUrl, { id: 'mapbox/dark-v10', tileSize: 512, zoomOffset: -1 }), 'OpenStreetMap': L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'), "None": L.tileLayer("") };
+  
+      mapContainer.current = L.map('map', { zoomControl: false, attributionControl: false });
+      mapContainer.current.setView([51.505, -0.09], 13);
+  
+      stateLayer.current = L.geoJSON(_geojsonData, { style: style, onEachFeature: onEachFeature });
+      stateLayer.current.addTo(mapContainer.current);
+  
+      if (colorData.current!.bound != null) {
+        mapContainer.current.fitBounds(L.latLngBounds(colorData.current!.bound));
+      }
+      else {
+        mapContainer.current.fitBounds(stateLayer.current.getBounds());
+      }
+  
+      L.control.layers(layers).addTo(mapContainer.current);
+  
+      if (colorData.current!.function != null) {
+        createFunction(colorData.current!.function)
+      }
     }
-    convertApiToPageData(path,paramAlreadyLoaded).then(
-      (data) => setPageData(data)
-    )
-  }, [searchParams,paramLoaded]);
+
+    function loadInitialData(path: string) {
+      mapApi.getPageData(path).then(
+        async (data) => {
+          mapApi.getColorData(data?.data as RequestInfo).then(
+            async (_colorData) => {
+              const _geoJsonData = await mapApi.getJsonResponseFromUrl(data?.map as RequestInfo);
+              setTitleDesc({
+                title: _colorData.title, desc: _colorData.desc, metatitle: data.title
+              });
+              colorData.current = _colorData;
+              geojsonData.current = _geoJsonData;
+              initilizeMap(_geoJsonData);
+            }
+          );
+  
+        }
+      )
+    }
+
+    return () => loadInitialData(path);
+  }, [searchParams, onEachFeature, createFunction]);
+  
+
+  // state change functions
+  function showResult(_html: string, _color: string) {
+    setResult(`<div style='background-color:${_color};' class='h-full w-full text-[16px] text-center p-2 overflow-auto font-mono'>${_html}</div>`);
+  }
 
   return (
-    <div className='h-full'>
-      {pageData?.title && <div className='flex ml-4 md:ml-8 mt-4 text-xl font-bold items-center'>
-        {pageData.title}
-        {pageData.icon && <Popup
-          trigger={open => (
-            <IconInfoCircle className='ml-2 cursor-pointer' />
-          )}
-
-          on={['hover', 'focus']}
-          arrowStyle={{ color: 'rgb(255,255,255,1)' }}
-          contentStyle={{
-            background: 'rgb(255,255,255,1)', color: 'black', borderColor: '#fff', borderRadius: '0.25rem',
-            maxWidth: '400px', paddingLeft: '8px', paddingRight: '8px', paddingTop: '4px', paddingBottom: '4px',
-            border: '1px'
-          }}
-          overlayStyle={{ color: 'rgba(0,0,0,0.5)' }}
-        >
-          <div className='text-xs '> {pageData.icon} </div>
-        </Popup>}
-      </div>}
-      <div className='ml-4 md:ml-8 mt-4 '>
-        {
-          (pageData === null) ?
-            <div className='flex h-[50vh] justify-center items-center'><ClipLoader color='red'
-            /></div> :
-            <div className='flex flex-wrap'>{
-              pageData.Objects.map(
-                (page, index) => (index != 0) ? <NormalCard key={page.id} page={page} /> : <DoubleCard key={page.id} page={page} />
-              )
-            }</div>
-        }
+    <div className='flex flex-col w-full h-full'>      
+      {(titleDesc.title!=='')?<title>{titleDesc.metatitle}</title>:<div/>}
+      <Header title={titleDesc.title} className='!h-[50px] !text-center' />
+      <div className='flex-1 flex md:flex-row flex-col flex-grow  w-full'>
+        <div className='w-full md:w-3/4 h-full'>
+          <div id='map' className='flex items-center justify-center pl-1 pb-1 border-l-black min-w-[75vw] min-h-[calc(100vh-380px)] w-full h-full overflow-clip !bg-slate-50'>
+            {(titleDesc.title=='')?<ClipLoader color='red'/>:<div/>}
+          </div>
+        </div>
+        <div className='flex md:flex-col w-full md:h-full h-[320px]'>
+          {(result!==undefined)?<div dangerouslySetInnerHTML={{ __html: result }} className='h-[320px] md:h-[calc(100vh-370px)] w-full bg-green-300'/>:
+            <div className='h-[320px] md:h-[calc(100vh-370px)] w-full bg-green-300 text-xs font-mono text-center flex flex-col items-center justify-center'>
+              {(titleDesc.title=='')?<div/>:<><IconPointer /> Move Cursor on Map <br/> to view this section</>}
+            </div>}
+          <div className='flex w-full h-[320px] overflow-auto bg-amber-100'>
+            <div dangerouslySetInnerHTML={{ __html: titleDesc.desc }} className='p-2 w-full text-[16px] flex justify-center text-center overflow-auto' />
+          </div>
+          </div>
       </div>
     </div>
   );
-}
-
-const getAltImgLink = (imageLink: string): string|null => {
-
-  const githubRawRegex = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(.+)$/;
-  const githubRawMatch = imageLink.match(githubRawRegex);
-
-  if (githubRawMatch) {
-    const [, owner, repo, filePath] = githubRawMatch;
-    return `https://${owner}.github.io/${repo}/${filePath}`;
-  } else {
-    const githubPageRegex = /^https:\/\/([^/]+)\.github\.io\/([^/]+)\/(.+)$/;
-    const githubPageMatch = imageLink.match(githubPageRegex);
-
-    if (githubPageMatch) {
-      const [, owner, repo, filePath] = githubPageMatch;
-      return `https://raw.githubusercontent.com/${owner}/${repo}/master/${filePath}`;
-    }
-  }
-
-  // If the input doesn't match either pattern, return the input itself
-  return null;
-};
-
-
-function DoubleCard(props: { page: PageObject }) {
-  const page = props.page;
-  const altImg =getAltImgLink(page.img);
-  const href = (page.type === 'page') ? { pathname: '/', query: { page: page.id } } : { pathname: 'https://garudadevdataservices.github.io/map', query: { map: page.id } }
-  return <div className='w-full md:w-1/2 lg:w-2/3 pr-4 pb-4'>
-    <Link href={href}
-      key={page.id} title={page.title} className='w-full bg-white cursor-pointer flex flex-col lg:flex-row justify-center items-center border shadow-lg rounded-md lg:rounded-xl  mx-auto transition-all duration-100 ease-in h-56 font-medium overflow-hidden'>
-      <picture className='relative lg:w-2/3 w-full flex justify-center'>
-      {(page.type=='page') && <div className='mt-1 lg:mt-0 rounded-3xl text-white px-2 flex absolute top-0 right-2 text-[14px] font-mono bg-black/[0.5]'>Map Collection</div>}
-        <img src={page.img} alt={altImg?altImg:page.title} className=' h-48 object-cover'/>
-        {/* <div className=' absolute top-[50%] right-[25%] text-base font-serif font-semibold text-red-600'>ELECTIONS</div> */}
-        {page.tag && tag(page.tag)}
-      </picture>
-      <div className='h-full bg-teal-50 rounded-xl flex flex-1 justify-center items-center whitespace-nowrap lg:whitespace-normal w-full lg:w-1/3 px-2 '>
-        <div className='w-full text-center text-ellipsis overflow-hidden text-md'>{page.title}</div>
-      </div>
-    </Link></div>
-}
-
-
-function NormalCard(props: { page: PageObject }) {
-  const page = props.page;
-  const altImg =getAltImgLink(page.img);
-  const href = (page.type === 'page') ? { pathname: '/', query: { page: page.id } } : { pathname: 'https://garudadevdataservices.github.io/map', query: { map: page.id } }
-  return <div className='w-full md:w-1/2 lg:w-1/3 pr-4 pb-4'>
-    <Link href={href}
-      key={page.id} title={page.title} className='bg-white cursor-pointer  flex flex-col justify-center items-center border shadow-lg rounded-md  mx-auto transition-all duration-100 ease-in h-56 overflow-hidden font-medium'>
-      <picture className='relative w-full text-center flex justify-center'>
-        {(page.type=='page') && <div className=' rounded-3xl text-white px-2 flex absolute top-0 right-2 text-[14px] font-mono bg-black/[0.5] my-1'>Map Collection</div>}
-        <img src={page.img} alt={altImg?altImg:page.title} className=' h-48 object-cover' />
-        {/* <div className=' absolute top-[50%] right-[25%] text-base font-serif font-semibold text-red-600'>ELECTIONS</div> */}
-        {page.tag && tag(page.tag)}
-      </picture>
-      <div className=' bg-teal-50 rounded-md flex flex-1 justify-center items-center  w-full whitespace-nowrap px-2 '>
-        <div className='w-full text-center text-ellipsis overflow-hidden text-sm'>{page.title}</div>
-      </div>
-    </Link></div>
-}
-
-function tag(_tag:string) {
-  switch(_tag){
-    case "politics":
-      return <div className=' rounded-l-2xl border border-black bg-white pl-2 flex absolute items-end gap-2 bottom-0 right-0 text-base font-serif font-bold'>
-        <div className='pb-1'>ELECTIONS</div>
-        <Image src={Elections} alt={''} className='w-10 h-10' />
-      </div>
-    case "religion":
-      return <div className=' rounded-l-2xl border border-black bg-white pl-2 flex absolute items-end gap-1 bottom-0 right-0 text-base font-serif font-bold'>
-        <div className='pb-1'>RELIGION</div>
-        <Image src={Religion} alt={''} className='w-10 h-10' />
-      </div>
-    case "language":
-      return <div className=' rounded-l-2xl border border-black bg-white pl-2 flex absolute items-end gap-1 bottom-0 right-0 text-base font-serif font-bold'>
-        <div className='pb-1'>LANGUAGE</div>
-        <Image src={Language} alt={''} className='w-10 h-10' />
-      </div>
-    default:
-      return <div className='pr-3 pt-1 px-2 rounded-l-2xl border border-black bg-white pl-2 flex absolute items-end gap-1 bottom-0 right-0 text-base font-serif font-bold'>
-        <div className='pb-1'>{_tag}</div>
-      </div>
-  }
-  
 }

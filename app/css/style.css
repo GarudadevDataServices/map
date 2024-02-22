@@ -1,0 +1,12 @@
+hr {
+    display: block;
+    content: "";
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+
+  table,
+  th,
+  td {
+      border: 1px solid black;
+  }
