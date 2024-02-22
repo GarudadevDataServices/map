@@ -10,8 +10,9 @@ export const getPageData = async (path:String): Promise<PageData> => {
 export async function getJsonResponseFromUrl(url: RequestInfo, maxRetries: number = 3): Promise<Map<string, any>> {
   let retries = 0;
   while (retries < maxRetries) {
+    console.log("hello");
     try {
-      const response: Response = await fetch(url);
+      const response: Response = await fetch(url, { cache: 'no-store' });
       const json: Map<string, any> = await response.json();
       if (response.ok) {
         return json;
