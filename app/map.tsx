@@ -159,6 +159,8 @@ export default function Page() {
     }
 
     function loadInitialData(path: string) {
+      
+      console.log(`Getting for more on ${path}`)
       mapApi.getPageData(path).then(
         async (data) => {
           mapApi.getColorData(data?.data as RequestInfo).then(
