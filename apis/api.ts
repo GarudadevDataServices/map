@@ -1,8 +1,6 @@
-"use client";
 import { MapColorData, PageData } from "models/model";
 
 export const getPageData = async (path:String): Promise<PageData> => {
-    console.log(`in getPageData ${path}`)
     const apiUrl = `https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/${path}/.json`;
     const jsonData = await getJsonResponseFromUrl(apiUrl);
     return (jsonData as unknown as PageData);
