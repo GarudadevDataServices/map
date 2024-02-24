@@ -174,8 +174,8 @@ export default function Page() {
       )
     }
 
-    return () => loadInitialData(path); // for local
-    // loadInitialData(path); // for prod
+    // return () => loadInitialData(path); // for local
+    loadInitialData(path); // for prod
   }, [searchParams, onEachFeature, createFunction]);
 
 
