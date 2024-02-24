@@ -13,6 +13,7 @@ export interface MapColorData {
     desc: string;
     title: string;
     trigger: string;
+    search_trigger?: string;
     bound?: LatLngExpression[];
     border?: string;
     function?: FunctionData;
