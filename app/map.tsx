@@ -20,7 +20,7 @@ interface pageJsonStates {
 
 export default function Page() {
   const [result, setResult] = useState<string>();
-  const [titleDesc, setTitleDesc] = useState<pageJsonStates>({ title: '', desc: '', metatitle: '',search_trigger:undefined });
+  const [titleDesc, setTitleDesc] = useState<pageJsonStates>({ title: '', desc: '', metatitle: '', search_trigger: undefined });
 
   const searchParams = useSearchParams();
   const colorData = useRef<MapColorData | null>(null);
@@ -162,7 +162,7 @@ export default function Page() {
             async (_colorData) => {
               const _geoJsonData = await mapApi.getJsonResponseFromUrl(data?.map as RequestInfo);
               setTitleDesc({
-                title: _colorData.title, desc: _colorData.desc, metatitle: data.title,search_trigger: _colorData.search_trigger
+                title: _colorData.title, desc: _colorData.desc, metatitle: data.title, search_trigger: _colorData.search_trigger
               });
               colorData.current = _colorData;
               geojsonData.current = _geoJsonData;
@@ -265,17 +265,25 @@ export default function Page() {
             {(titleDesc.title == '') ? <ClipLoader color='red' /> : <div />}
           </div>
         </div>
+        
         <div className='bg-pink-300 flex md:flex-col md:w-full md:h-[calc(100vh-50px)] h-[320px]'>
-          {(result !== undefined) ? <div dangerouslySetInnerHTML={{ __html: result }} className='h-[320px] md:h-[50%] w-[50%] md:w-full bg-green-300' /> :
-            <div className='h-[320px] md:h-[50%] w-[50vw] md:w-full bg-green-300 text-xs font-mono text-center flex flex-col items-center justify-center'>
+          <div className='h-[320px] md:h-[50%] w-[50vw] md:w-full'>
+            {(result !== undefined) ? 
+            <div dangerouslySetInnerHTML={{ __html: result }} className='h-full w-full bg-green-300' /> :
+            <div className='h-full w-full bg-green-300 text-xs font-mono text-center flex flex-col items-center justify-center'>
               {(titleDesc.title == '') ? <div /> : <><IconPointer /> Move Cursor on Map <br /> to view this section</>}
             </div>}
-          <div className='flex flex-col w-[50vw] md:w-full h-[320px] md:h-[50%] overflow-auto bg-amber-100'>
-            
-          {(!!titleDesc.search_trigger)?<div className='h-[40px] w-full z-20'>
-            <SearchBar /></div>:<></>}
-            <div dangerouslySetInnerHTML={{ __html: titleDesc.desc }} className='p-2 w-full text-[16px] flex justify-center text-center overflow-auto' />
           </div>
+          
+
+          <div className='w-[50vw] md:w-full h-[320px] md:h-[50%] '>
+            <div className='w-full h-full flex flex-col overflow-auto bg-amber-100'>
+              {(!!titleDesc.search_trigger) ? <div className='h-[40px] w-full z-20'>
+                <SearchBar /></div> : <></>}
+              <div dangerouslySetInnerHTML={{ __html: titleDesc.desc }} className='p-2 w-full text-[16px] flex justify-center text-center overflow-auto' />
+            </div>
+          </div>
+          
         </div>
       </div>
     </div>
