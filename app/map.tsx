@@ -249,7 +249,7 @@ export default function Page() {
         onSearchFeature(_layer as any, value.item.key)
 
       }}
-      autoFocus
+      autoFocus={false}
       leftIcon={<>🔍</>}
       iconBoxSize="48px"
     />
