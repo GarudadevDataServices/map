@@ -88,8 +88,8 @@ export default function Page() {
     if (colorData.current != null) {
       return {
         fillColor: ((colorData.current.data as any)[key] == null) ? 'snow' : (colorData.current.data as any)[key].color,
-        weight: (border == null) ? 0.3 : border[0] as any,
-        opacity: (border == null) ? 0.85 : border[1] as any,
+        weight: (border == null) ? 0.5 : border[0] as any,
+        opacity: (border == null) ? 0.5 : border[1] as any,
         color: 'black',
         fillOpacity: .8,
       }
