@@ -23,7 +23,7 @@ function onEachFeature(feature, layer) {
             }
             lastClickedLayer=layer;
             layer.setStyle(highlight);
-            document.getElementById("result").innerHTML=output;
+            document.getElementById("result").innerHTML="<div class='max-w-full overflow-x-auto'>"+output+"</div>";
             document.getElementById("result").style.backgroundColor=_color;
         }); 
 
@@ -42,7 +42,7 @@ function onEachFeature(feature, layer) {
         lastClickedLayer=layer;
         checkLayer=layer;
         layer.setStyle(highlight);
-        document.getElementById("result").innerHTML=output;
+        document.getElementById("result").innerHTML="<div class='max-w-full overflow-x-auto'>"+output+"</div>";
         document.getElementById("result").style.backgroundColor=_color;
     });   
 }
