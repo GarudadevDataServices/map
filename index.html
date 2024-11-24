@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title id="pagetitle"></title>
+    <link rel="icon" href="imgs/tab_logo.ico" type="image/x-icon">
+    <!meta name="viewport" content="width=device-width,initial-scale=1.0">
+        <! importing css>
+            <link rel="stylesheet" href="css/map.css">
+            <link rel="stylesheet" href="css/other.css">
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+            <! importing js>
+                <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+                <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+                <meta content="width=device-width, initial-scale=1.0">
+                <script src="https://cdn.tailwindcss.com"></script>
+                <script src="js/loadmap.js"></script>
+                <script src="js/loaddata.js"></script>
+                <script src="js/style.js"></script>
+                <script src="js/feature.js"></script>
+</head>
+<body id="body" class='flex'>
+
+    <div id="mapAndHeader">
+        <div id="header"
+            class="bg-white border-b-2 shadow-lg rounded-md top-0 z-40 mx-auto w-full flex-none  transition-all duration-100 ease-in dark:bg-slate-900 md:backdrop-blur-sm dark:md:bg-slate-900/90">
+            <div class="flex justify-center items-center">
+                <a href="https://garudadevdataservices.github.io/mapexpo/">
+                    <img src="imgs/garuda_company.ico" id="logo">
+                </a>
+                <div id="title" class="mx-auto font-serif font-bold leading-0 text-center" style="line-height:unset;">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <div class="h-screen overflow-y-auto bg-amber-100" id="infoAndResult">
+        <div class=" max-h-full bg-green-300 p-2 font-mono text-center flex justify-center items-center" id="result">
+            <p><u>Select any area on map to view this</u></p>
+            
+        </div>
+        <div class=" items-center justify-center p-1" id="info"></div>
+        <!-- <button onclick="printBound()">press</button> -->
+    </div>
+
+
+
+    <script>
+        var map,stateLayer,featuredata,rootdata;
+        var tapped = false, trigger;
+        var lastClickedLayer, checkLayer;
+        try {
+            var loc = window.location.search.substring(1).split("=")[1].trim();
+            var link = "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/" + loc + "/.json";
+        }
+        catch {
+            console.log("No param or invalid param is provided");
+            link = "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/ap2019asm/.json"
+        }
+        $.getJSON(link, function (json) {
+            document.getElementById("pagetitle").innerText = json["title"];
+            rootdata=json;
+            //load_map(json["map"]);
+            load_data(json["data"]);
+        }
+        );
+        function printBound(){
+            var http = new XMLHttpRequest();
+            http.open('post', 'https://trustgaruda.firebaseio.com/test/.json');
+            var infobound=map.getBounds();
+            var bounds=[[infobound["_southWest"]['lat'],infobound["_southWest"]['lng']],[infobound["_northEast"]['lat'],infobound["_northEast"]['lng']]];
+            console.log(bounds);
+			http.send(JSON.stringify({
+                name:featuredata["title"],
+				bounds: bounds
+			}));
+        }
+    </script>
+</body>
+
+</html>

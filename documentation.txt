@@ -1,0 +1,17 @@
+variable info
+-------------
+-------------
+
+main link : link contains geojson and json files links
+
+
+global scope: 
+-------------
+	-> map : where map is loaded from leaflet
+	-> stateLayer : 
+	-> featuredata : 
+	-> rootdata : Data from main link
+	-> tapped :
+	-> trigger :
+	-> lastClickedLayer :
+	-> checkLayer :
