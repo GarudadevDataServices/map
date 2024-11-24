@@ -11,7 +11,7 @@ html,body {
 }
 @media screen and (max-width: 992px) {
     #map {
-        max-height: 65vh;
+        max-height: 60vh;
     }
 }
 .leaflet-container {

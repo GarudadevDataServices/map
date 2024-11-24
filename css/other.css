@@ -70,7 +70,7 @@ td {
         width: 100%;
         flex-direction: row;
         display: flex;
-        min-height: 40vh;
+        min-height: 31vh;
     }
     #header {
         height: 4vh;
@@ -82,7 +82,7 @@ td {
         width: 50%;
     }
     #info{
-        min-height: 40vh;
+        min-height: 31vh;
         font-size: 1.2vh;
         padding-top: 1vh;
         width: 50%;
