@@ -73,7 +73,8 @@
             }).fail(function() {
                 if (counter < 3) {
                     counter++;
-                    loadInternalLink();
+                    sleep(1500).then(() => { loadInternalLink(); });
+                    // loadInternalLink();
                 }
             });
         }
