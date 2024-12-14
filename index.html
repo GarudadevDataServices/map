@@ -52,21 +52,28 @@
         var map,stateLayer,featuredata,rootdata;
         var tapped = false, trigger;
         var lastClickedLayer, checkLayer;
-        try {
-            var loc = window.location.search.substring(1).split("=")[1].trim();
-            var link = "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/" + loc + "/.json";
+        
+        const loc = window.location.search.substring(1).split("=")[1];
+        var link =  "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/ind2024par/.json";
+        if (!!loc){
+            link = "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/" + loc.trim() + "/.json";
         }
-        catch {
-            console.log("No param or invalid param is provided");
-            link = "https://newscode-fc5e6-default-rtdb.firebaseio.com/mapanalysis/ap2019asm/.json"
+        
+        var counter=0;
+        var loadInternalLink = function(){
+            $.getJSON(link, function (json) {
+                document.getElementById("pagetitle").innerText = json["title"];
+                rootdata=json;
+                load_data(json["data"]);
+            }).fail(function() {
+                if (counter < 3) {
+                    counter++;
+                    loadInternalLink();
+                }
+            });
         }
-        $.getJSON(link, function (json) {
-            document.getElementById("pagetitle").innerText = json["title"];
-            rootdata=json;
-            //load_map(json["map"]);
-            load_data(json["data"]);
-        }
-        );
+        loadInternalLink();
+
         function printBound(){
             var http = new XMLHttpRequest();
             http.open('post', 'https://trustgaruda.firebaseio.com/test/.json');
