@@ -43,14 +43,19 @@
             
         </div>
         <div class=" items-center justify-center p-1" id="info"></div>
+        
+        <div class="absolute bottom-0 w-[inherit]">
+            <select id="loc" class="w-full p-2 rounded-md border-2">
+                <option value="" disabled selected>Select location</option>
+            </select>
+        </div>
         <!-- <button onclick="printBound()">press</button> -->
     </div>
 
 
-
     <script>
         var map,stateLayer,featuredata,rootdata;
-        var tapped = false, trigger;
+        var tapped = false, trigger,search_trigger;
         var lastClickedLayer, checkLayer;
         
         const loc = window.location.search.substring(1).split("=")[1];
