@@ -11,25 +11,31 @@ function load_map(file){
         // add control layers
         L.control.layers(layers).addTo(map);
         // add a select box for the layer
-        var select = document.getElementById("loc");
-        stateLayer.eachLayer(function (layer) {
-            var option = document.createElement("option");
-            option.value = layer.feature.properties[search_trigger];
-            option.text = layer.feature.properties[search_trigger];
-            select.appendChild(option);
-        });
-        // add an event listener to the select box
-        select.addEventListener("change", function(e){
-            var selected = e.target.value;
+        var selectBar = document.getElementById("locBar");
+        if (search_trigger != null && search_trigger !== undefined && $(window).width() >= 992) {
+
+            selectBar.style.display="block";   
+            
+            var select = document.getElementById("loc");
             stateLayer.eachLayer(function (layer) {
-                if (layer.feature.properties[search_trigger] == selected){
-                    console.log("selected " + selected);
-                    layer.fire('click');
-                    // update the map view with the bounds of the selected layer
-                    map.fitBounds(layer.getBounds());
-                }
+                var option = document.createElement("option");
+                option.value = layer.feature.properties[search_trigger];
+                option.text = layer.feature.properties[search_trigger];
+                select.appendChild(option);
             });
-        });
+            // add an event listener to the select box
+            select.addEventListener("change", function(e){
+                var selected = e.target.value;
+                stateLayer.eachLayer(function (layer) {
+                    if (layer.feature.properties[search_trigger] == selected){
+                        console.log("selected " + selected);
+                        layer.fire('click');
+                        // update the map view with the bounds of the selected layer
+                        map.fitBounds(layer.getBounds());
+                    }
+                });
+            });
+        } 
         // add the stateLayer to the map
         stateLayer.addTo(map);
         // set the map view with the bounds of the stateLayer
