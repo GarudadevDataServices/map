@@ -19,15 +19,15 @@ td {
 }
 
 #mapAndHeader{
-    width: 75%;
+    width: 80%;
 }
 
 #header{
-    height: 6vh;
+    height: 0vh;
 }
 
 #infoAndResult{
-    width: 25%;
+    min-width: 20%;
     flex-direction: column;
 }
 
@@ -47,9 +47,9 @@ td {
     padding-top: 3vh;
     min-height: 50vh;
     width: 100%;
-    overflow-y: auto;
+    /* overflow-y: auto; */
     max-height: none;
-    overflow-y: none;
+    /* overflow-y: none; */
 }
 
 @media screen and (max-width: 992px) {
@@ -87,7 +87,7 @@ td {
         padding-top: 1vh;
         width: 50%;
         direction: flex;
-        overflow-y: auto;
+        /* overflow-y: auto; */
         max-height: 100%; 
         align-items: center;
         justify-items: center;

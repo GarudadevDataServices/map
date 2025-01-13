@@ -9,7 +9,7 @@ function load_map(file){
     $.getJSON(file, function (data) {
         stateLayer = L.geoJson(data, {style: style, onEachFeature: onEachFeature});
         // add control layers
-        L.control.layers(layers).addTo(map);
+        // L.control.layers(layers).addTo(map);
         // add a select box for the layer
         var selectBar = document.getElementById("locBar");
         if (search_trigger != null && search_trigger !== undefined && $(window).width() >= 992) {
@@ -21,7 +21,7 @@ function load_map(file){
                 var option = document.createElement("option");
                 option.value = layer.feature.properties[search_trigger];
                 option.text = layer.feature.properties[search_trigger];
-                select.appendChild(option);
+                // select.appendChild(option);
             });
             // add an event listener to the select box
             select.addEventListener("change", function(e){
